@@ -6,6 +6,7 @@ int LED = 13;               //store the pin number where the LED is connected
 // the setup function runs once when you press reset or power the board
 void setup() {
   pinMode(LED, OUTPUT);     //set pin 5 to send signal
+ // pinMode(PIN NUMBER, MODE / OUT/IN);
 }
 
 // the loop function runs over and over again forever

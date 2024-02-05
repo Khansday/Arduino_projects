@@ -1,6 +1,7 @@
 int M1_p = 1;  //pins to control motor 1
 int M1_n = 2;
 int M1_s = 3;
+
 int M2_p = 4;  //pins to control motor 2
 int M2_n = 5;
 int M2_s = 6;
@@ -11,7 +12,7 @@ void go_Forward(){
   digitalWrite(M1_n , LOW);
   analogWrite(M1_s , 80);     
 
-  digitalWrite(M2_p , HIGH);      //mnotor 2 fwd
+  digitalWrite(M2_p , HIGH);      //motor 2 fwd
   digitalWrite(M2_n , LOW);
   analogWrite(M2_s , 80); 
 }

@@ -6,6 +6,7 @@ int motor2 = 6;
 int motorSpeed = 5;
 int buzzer = 11;
 
+
 void setup() {
   //put all pins chosen as OUTPUT
   pinMode(redLight, OUTPUT);
@@ -46,7 +47,7 @@ void loop() {
   analogWrite(motorSpeed, 255);     //motor full speed
   delay(1000);                      //wait 1 sec
 
-  tone(buzzer, 1000, 1000);         //rude driver honking for 1 sec
+  tone(buzzer, 4000, 1000);     //rude driver honking for 1 sec
   noTone(buzzer);                   //disconnect buzzer
   delay(4000);                      //wait 4 sec
   digitalWrite(greenLight, LOW);    //green light OFF

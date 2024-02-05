@@ -23,30 +23,30 @@ long scaleFactorAccel = 8192;
 
 
 //pins for the motor driver
-
-#define M1_d 5
-#define M1_dr 6
-#define M1_speed 9
-#define M2_d 7
-#define M2_dr 8
-#define M2_speed 10
+#define M1_d 7
+#define M1_dr 8
+#define M1_speed 6
+#define M2_d 9
+#define M2_dr 10
+#define M2_speed 11
 #define min_speed 35
+#define max_speed 80
 
 
 //Bunch of variables
 int pwm;
-float err, Kp = 21.50, Kd = 7, Ki = 5; //this sets the sensitivity of the motors in regards to tilt. Tune it with trial and error
+float err, Kp = 25.00, Kd = 10, Ki = 0; //this sets the sensitivity of the motors in regards to tilt. Tune it with trial and error
 float errd;  //variable to store derivative of error
 double Ox=0;  //store previous reading for next cycle
 float integral = 0; //store the cumulative error
-float set_point_offset = -2.0;  //allowing set point calibration
+float set_point_offset = 0.0;  //allowing set point calibration
 
 #define P_pot A0           //pot to set the Kp value 0 to 30
 #define D_pot A1           //pot to set the Kd value 0 to 20
 #define set_point_offset_pot A2   // use this pot to change the centre set point
 #define I_pot A3           //pot to set the Ki value 0 to 5
 
-#define BALANCE_LED 12    //LED that lights up when robot is balanced
+#define BALANCE_LED 5    //LED that lights up when robot is balanced
 
 void setup() {
   // Start
@@ -106,7 +106,7 @@ void loop() {
 
   // Data out serial monitor
   // Serial.println(freq,0);   //Serial.print(",");
-  // Serial.println(roll - set_point_offset,1);   //Serial.print(", \t");
+   Serial.println(roll - set_point_offset,1);   //Serial.print(", \t");
    // Serial.print(" Kp = ");    Serial.println(Kp);
   //  Serial.print(" Ki = ");    Serial.print(Ki);
   //  Serial.print(" Kd = ");    Serial.println(Kd);     
@@ -138,7 +138,7 @@ void set_PID_constants(){
 
 void balance_LED(){
   if ((roll - set_point_offset) > -0.3 && (roll - set_point_offset) < 0.3){ //if almost balanced with 0.3 degrees of tollerance
-    digitalWrite(BALANCE_LED ,1);
+    digitalWrite(BALANCE_LED ,0);
     stop();
   }
   
@@ -147,7 +147,7 @@ void balance_LED(){
     integral = 0;
   }
   else{
-    digitalWrite(BALANCE_LED ,0);
+    digitalWrite(BALANCE_LED ,1);
     // moved here because I dont wanna update motors if no need
     balance_robot();      //update the pwm and direction
   }
@@ -202,7 +202,7 @@ void balance_robot(){
   
 
   if (pwm > 0){   //if tilted fw/bkw
-    pwm = constrain(pwm, min_speed , 255);  //make sure value fits input parameter
+    pwm = constrain(pwm, min_speed , max_speed);  //make sure value fits input parameter
     digitalWrite(M1_d , HIGH);
     digitalWrite(M1_dr , LOW);
     digitalWrite(M2_d , HIGH);
@@ -212,7 +212,7 @@ void balance_robot(){
 
   }
   else{
-    pwm = constrain(pwm,-255, -min_speed  );  //make sure value fits input parameter
+    pwm = constrain(pwm,-max_speed, -min_speed  );  //make sure value fits input parameter
     digitalWrite(M1_d , LOW);
     digitalWrite(M1_dr , HIGH);
     digitalWrite(M2_d , LOW);

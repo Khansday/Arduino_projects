@@ -3,20 +3,21 @@
 #include "PinDefinitionsAndMore.h" // Define macros for input and output pin etc.
 #include <IRremote.hpp>
 
-#include "U8glib.h"
-U8GLIB_SSD1306_128X64 u8g(U8G_I2C_OPT_DEV_0|U8G_I2C_OPT_NO_ACK|U8G_I2C_OPT_FAST);	// Fast I2C / TWI 
+#include <U8g2lib.h>
+#include <Wire.h>
+
+U8G2_SH1106_128X64_NONAME_1_HW_I2C u8g2(U8G2_R0);
 int pixelColour = 1;
 
 #include <Servo.h>
 Servo robotNeck;  // create servo object to control a servo
 
-#define M1_d 7
+#define M1_d 12
 #define M1_dr 4
 #define M1_speed 5
-#define M2_d 9
+#define M2_d 7
 #define M2_dr 8
 #define M2_speed 6
-#define STBY 6
 
 int motorSpeed =180;
 const int sensorThreshold = 300; //Adjust this threshold to detect the line ( 0 - 1023 ); 
@@ -26,7 +27,7 @@ const int sensorThreshold = 300; //Adjust this threshold to detect the line ( 0 
 int leftSensorValue;
 int rightSensorValue;
 
-int robotNeck_pin = 3; 
+int robotNeck_pin = 9; 
 
 int distanceSensor = A0; 
 int distanceValue;
@@ -41,7 +42,7 @@ int mode;
 bool RCflag = false;
 bool autoFlag = false;
 bool lineFlag = false;
-char *modestr;
+char *modestr = "START";
 
 void goForward(){
   digitalWrite(M1_d , LOW);
@@ -115,20 +116,20 @@ void makeTurn(){
 }
 
 void drawBox(){
-  u8g.firstPage();  
+  u8g2.firstPage();  
   do {
-    u8g.drawBox(0,0,128,64); //box in the middle of the screen
-  } while( u8g.nextPage() );
+    u8g2.drawBox(0,0,128,64); //box in the middle of the screen
+  } while( u8g2.nextPage() );
 }
 
 void writeMode(){
-  u8g.firstPage();  
+  u8g2.firstPage();  
   do {
     // graphic commands to redraw the complete screen should be placed here  
-  u8g.setFont(u8g_font_unifont);
-  //u8g.setFont(u8g_font_osb21);
-  u8g.drawStr( 0, 22, modestr);
-  } while( u8g.nextPage() );
+  u8g2.setFont(u8g_font_unifont);
+  //u8g2.setFont(u8g_font_osb21);
+  u8g2.drawStr( 0, 22, modestr);
+  } while( u8g2.nextPage() );
 }
 
 void setup() {
@@ -144,7 +145,6 @@ void setup() {
   pinMode(LED_red , OUTPUT);
   pinMode(LED_white , OUTPUT);
   pinMode(buzzer , OUTPUT);
-  //pinMode(STBY , OUTPUT);
 
   pinMode(Pwr , INPUT_PULLUP);
 
@@ -160,6 +160,8 @@ void setup() {
   //digitalWrite(STBY , HIGH);
 
   //drawBox();
+  u8g2.begin();  
+
 
   robotNeck.attach(robotNeck_pin);
   robotNeck.write(90);
@@ -212,7 +214,7 @@ void loop() {
       break;
       case(0x47):   //button 3
         pixelColour = 1 - pixelColour;
-        u8g.setColorIndex(pixelColour);
+        u8g2.setColorIndex(pixelColour);
         drawBox();
       break;
       case(0x44):   //button 4

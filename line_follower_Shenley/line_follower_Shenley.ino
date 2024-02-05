@@ -13,9 +13,9 @@ int rightSensorValue;
 #define M1_d 5
 #define M1_dr 4
 #define M1_speed 3
-#define M2_d 10
-#define M2_dr 9
-#define M2_speed 11
+#define M2_d 6
+#define M2_dr 8
+#define M2_speed 9
 #define STBY 6
 #define Pwr 12
 int pwr_state;

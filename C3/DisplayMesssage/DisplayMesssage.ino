@@ -1,35 +1,19 @@
+#include <U8g2lib.h>
 
-#include "U8glib.h"
+U8G2_SH1106_128X64_NONAME_1_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 
-U8GLIB_SSD1306_128X64 u8g(U8G_I2C_OPT_NONE|U8G_I2C_OPT_DEV_0);	// I2C / TWI 
-
-
-void draw() {
-  // graphic commands to redraw the complete screen should be placed here  
-  u8g.setFont(u8g_font_unifont);
-  //u8g.setFont(u8g_font_osb21);
-  u8g.drawStr( 0, 22, "Hello World!");
-  u8g.drawCircle(64, 32, 14);
+char *a = "CIAO";
+void setup(void) {
+  u8g2.begin();
 }
 
-void setup() {
-  // flip screen, if required
-  // u8g.setRot180();
-  
-  // assign default color value
- 
-  u8g.setColorIndex(1);         // pixel on
-  
-}
-
-void loop() {
-  // picture loop
-  u8g.firstPage();  
+void loop(void) {
+  u8g2.setFont(u8g2_font_ncenB14_tr);
+  u8g2.firstPage();
   do {
-    draw();
-  } while( u8g.nextPage() );
-  
-  // rebuild the picture after some delay
-  //delay(50);
+    u8g2.setCursor(0, 10);
+    u8g2.print(a);
+  } while ( u8g2.nextPage() );
+  delay(1000);
 }
 

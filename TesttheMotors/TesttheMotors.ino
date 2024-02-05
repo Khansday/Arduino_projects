@@ -1,9 +1,9 @@
 #define M1_d 7
 #define M1_dr 8
-#define M1_speed 9
-#define M2_d 5
-#define M2_dr 6
-#define M2_speed 10
+#define M1_speed 6
+#define M2_d 9
+#define M2_dr 10
+#define M2_speed 11
 #define min_speed 35
 
 
@@ -41,6 +41,7 @@ pinMode(M1_speed , OUTPUT);
 pinMode(M2_d , OUTPUT);
 pinMode(M2_dr , OUTPUT);
 pinMode(M2_speed , OUTPUT);
+pinMode(5 , OUTPUT);
 
 // make surre the motors are OFF
 
@@ -50,6 +51,7 @@ digitalWrite(M1_speed , LOW);
 digitalWrite(M2_d , LOW);
 digitalWrite(M2_dr , LOW);
 digitalWrite(M2_speed , LOW);
+digitalWrite(5 , 0);
 
 Serial.begin(115200);
 Fwd();
