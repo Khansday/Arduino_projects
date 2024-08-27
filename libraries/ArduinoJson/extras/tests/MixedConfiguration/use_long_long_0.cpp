@@ -3,28 +3,40 @@
 
 #include <catch.hpp>
 
-template <size_t size_of_long>
-std::string get_expected_json();
-
-template <>
-std::string get_expected_json<4>() {
-  return "{\"A\":2899336981,\"B\":2129924785}";
-}
-
-template <>
-std::string get_expected_json<8>() {
-  return "{\"A\":123456789123456789,\"B\":987654321987654321}";
-}
+#include "Literals.hpp"
 
 TEST_CASE("ARDUINOJSON_USE_LONG_LONG == 0") {
-  DynamicJsonDocument doc(4096);
-  JsonObject root = doc.to<JsonObject>();
+  JsonDocument doc;
 
-  root["A"] = 123456789123456789;
-  root["B"] = 987654321987654321;
+  SECTION("smoke test") {
+    doc["A"] = 42;
+    doc["B"] = 84;
 
-  std::string json;
-  serializeJson(doc, json);
+    std::string json;
+    serializeJson(doc, json);
 
-  REQUIRE(json == get_expected_json<sizeof(long)>());
+    REQUIRE(json == "{\"A\":42,\"B\":84}");
+  }
+
+  SECTION("deserializeMsgPack()") {
+    SECTION("cf 00 00 00 00 ff ff ff ff") {
+      auto err =
+          deserializeMsgPack(doc, "\xcf\x00\x00\x00\x00\xff\xff\xff\xff"_s);
+
+      REQUIRE(err == DeserializationError::Ok);
+      REQUIRE(doc.as<uint32_t>() == 0xFFFFFFFF);
+    }
+
+    SECTION("cf 00 00 00 01 00 00 00 00") {
+      auto err =
+          deserializeMsgPack(doc, "\xcf\x00\x00\x00\x01\x00\x00\x00\x00"_s);
+
+      REQUIRE(err == DeserializationError::Ok);
+#if defined(__SIZEOF_LONG__) && __SIZEOF_LONG__ >= 8
+      REQUIRE(doc.as<JsonInteger>() == 0x100000000);
+#else
+      REQUIRE(doc.isNull());
+#endif
+    }
+  }
 }

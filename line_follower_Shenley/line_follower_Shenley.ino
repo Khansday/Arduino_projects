@@ -5,8 +5,8 @@ const int sensorThreshold = 300; //Adjust this threshold to detect the line ( 0 
 
 
 // Pin Definitions
-#define leftSensorPin A1     // Analog pin for left sensor
-#define rightSensorPin A2     // Analog pin for right sensor
+#define leftSensorPin A3     // Analog pin for left sensor
+#define rightSensorPin A4     // Analog pin for right sensor
 int leftSensorValue;
 int rightSensorValue;
 

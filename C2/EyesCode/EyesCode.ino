@@ -14,15 +14,18 @@ void loop() {
   // put your main code here, to run repeatedly:
     distance1= analogRead(IR_1);
     distance0= analogRead(IR_0);
-  if (distance0 < 400 && distance1 >550){
-    Serial.println("S1 detected");
-  }
-  else if (distance1 < 400 && distance0 >550){
-    Serial.println("S0 detected"); 
-  }
-  else {
-    Serial.println("NONE detected"); 
-  }
+  // if (distance0 < 400 && distance1 >550){
+  //   Serial.println("S1 detected");
+  // }
+  // else if (distance1 < 400 && distance0 >550){
+  //   Serial.println("S0 detected"); 
+  // }
+  // else {
+  //   Serial.println("NONE detected"); 
+  // }
+  // delay(200);
+  Serial.println(distance0);
   delay(200);
+
 }
 

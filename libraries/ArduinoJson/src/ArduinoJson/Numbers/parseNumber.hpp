@@ -1,5 +1,5 @@
-// ArduinoJson - arduinojson.org
-// Copyright Benoit Blanchon 2014-2019
+// ArduinoJson - https://arduinojson.org
+// Copyright © 2014-2024, Benoit BLANCHON
 // MIT License
 
 #pragma once
@@ -10,54 +10,18 @@
 #include <ArduinoJson/Polyfills/ctype.hpp>
 #include <ArduinoJson/Polyfills/math.hpp>
 #include <ArduinoJson/Polyfills/type_traits.hpp>
-#include <ArduinoJson/Variant/VariantContent.hpp>
+#include <ArduinoJson/Variant/Converter.hpp>
+#include <ArduinoJson/Variant/VariantData.hpp>
 
-namespace ARDUINOJSON_NAMESPACE {
-
-template <typename TFloat, typename TUInt>
-struct ParsedNumber {
-  ParsedNumber() : uintValue(0), floatValue(0), _type(VALUE_IS_NULL) {}
-
-  ParsedNumber(TUInt value, bool is_negative)
-      : uintValue(value),
-        floatValue(TFloat(value)),
-        _type(uint8_t(is_negative ? VALUE_IS_NEGATIVE_INTEGER
-                                  : VALUE_IS_POSITIVE_INTEGER)) {}
-  ParsedNumber(TFloat value) : floatValue(value), _type(VALUE_IS_FLOAT) {}
-
-  template <typename T>
-  T as() const {
-    switch (_type) {
-      case VALUE_IS_NEGATIVE_INTEGER:
-        return convertNegativeInteger<T>(uintValue);
-      case VALUE_IS_POSITIVE_INTEGER:
-        return convertPositiveInteger<T>(uintValue);
-      case VALUE_IS_FLOAT:
-        return convertFloat<T>(floatValue);
-      default:
-        return 0;
-    }
-  }
-
-  uint8_t type() const {
-    return _type;
-  }
-
-  TUInt uintValue;
-  TFloat floatValue;
-  uint8_t _type;
-};
+ARDUINOJSON_BEGIN_PRIVATE_NAMESPACE
 
 template <typename A, typename B>
-struct choose_largest : conditional<(sizeof(A) > sizeof(B)), A, B> {};
+using largest_type = conditional_t<(sizeof(A) > sizeof(B)), A, B>;
 
-template <typename TFloat, typename TUInt>
-inline ParsedNumber<TFloat, TUInt> parseNumber(const char *s) {
-  typedef FloatTraits<TFloat> traits;
-  typedef typename choose_largest<typename traits::mantissa_type, TUInt>::type
-      mantissa_t;
-  typedef typename traits::exponent_type exponent_t;
-  typedef ParsedNumber<TFloat, TUInt> return_type;
+inline bool parseNumber(const char* s, VariantData& result) {
+  typedef FloatTraits<JsonFloat> traits;
+  typedef largest_type<traits::mantissa_type, JsonUInt> mantissa_t;
+  typedef traits::exponent_type exponent_t;
 
   ARDUINOJSON_ASSERT(s != 0);
 
@@ -73,30 +37,50 @@ inline ParsedNumber<TFloat, TUInt> parseNumber(const char *s) {
   }
 
 #if ARDUINOJSON_ENABLE_NAN
-  if (*s == 'n' || *s == 'N') return traits::nan();
+  if (*s == 'n' || *s == 'N') {
+    result.setFloat(traits::nan());
+    return true;
+  }
 #endif
 
 #if ARDUINOJSON_ENABLE_INFINITY
-  if (*s == 'i' || *s == 'I')
-    return is_negative ? -traits::inf() : traits::inf();
+  if (*s == 'i' || *s == 'I') {
+    result.setFloat(is_negative ? -traits::inf() : traits::inf());
+    return true;
+  }
 #endif
 
-  if (!isdigit(*s) && *s != '.') return return_type();
+  if (!isdigit(*s) && *s != '.')
+    return false;
 
   mantissa_t mantissa = 0;
   exponent_t exponent_offset = 0;
-  const mantissa_t maxUint = TUInt(-1);
+  const mantissa_t maxUint = JsonUInt(-1);
 
   while (isdigit(*s)) {
     uint8_t digit = uint8_t(*s - '0');
-    if (mantissa > maxUint / 10) break;
+    if (mantissa > maxUint / 10)
+      break;
     mantissa *= 10;
-    if (mantissa > maxUint - digit) break;
+    if (mantissa > maxUint - digit)
+      break;
     mantissa += digit;
     s++;
   }
 
-  if (*s == '\0') return return_type(TUInt(mantissa), is_negative);
+  if (*s == '\0') {
+    if (is_negative) {
+      const mantissa_t sintMantissaMax = mantissa_t(1)
+                                         << (sizeof(JsonInteger) * 8 - 1);
+      if (mantissa <= sintMantissaMax) {
+        result.setInteger(JsonInteger(~mantissa + 1));
+        return true;
+      }
+    } else {
+      result.setInteger(JsonUInt(mantissa));
+      return true;
+    }
+  }
 
   // avoid mantissa overflow
   while (mantissa > traits::mantissa_max) {
@@ -136,21 +120,33 @@ inline ParsedNumber<TFloat, TUInt> parseNumber(const char *s) {
       exponent = exponent * 10 + (*s - '0');
       if (exponent + exponent_offset > traits::exponent_max) {
         if (negative_exponent)
-          return is_negative ? -0.0f : 0.0f;
+          result.setFloat(is_negative ? -0.0f : 0.0f);
         else
-          return is_negative ? -traits::inf() : traits::inf();
+          result.setFloat(is_negative ? -traits::inf() : traits::inf());
+        return true;
       }
       s++;
     }
-    if (negative_exponent) exponent = -exponent;
+    if (negative_exponent)
+      exponent = -exponent;
   }
   exponent += exponent_offset;
 
   // we should be at the end of the string, otherwise it's an error
-  if (*s != '\0') return return_type();
+  if (*s != '\0')
+    return false;
 
-  TFloat result = traits::make_float(static_cast<TFloat>(mantissa), exponent);
+  JsonFloat final_result =
+      make_float(static_cast<JsonFloat>(mantissa), exponent);
 
-  return is_negative ? -result : result;
+  result.setFloat(is_negative ? -final_result : final_result);
+  return true;
 }
-}  // namespace ARDUINOJSON_NAMESPACE
+
+template <typename T>
+inline T parseNumber(const char* s) {
+  VariantData value;
+  parseNumber(s, value);
+  return Converter<T>::fromJson(JsonVariantConst(&value, nullptr));
+}
+ARDUINOJSON_END_PRIVATE_NAMESPACE

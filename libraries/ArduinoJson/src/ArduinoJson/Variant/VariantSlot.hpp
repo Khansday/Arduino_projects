@@ -1,98 +1,86 @@
-// ArduinoJson - arduinojson.org
-// Copyright Benoit Blanchon 2014-2019
+// ArduinoJson - https://arduinojson.org
+// Copyright © 2014-2024, Benoit BLANCHON
 // MIT License
 
 #pragma once
 
-#include <ArduinoJson/Polyfills/gsl/not_null.hpp>
+#include <ArduinoJson/Memory/ResourceManager.hpp>
+#include <ArduinoJson/Polyfills/limits.hpp>
 #include <ArduinoJson/Polyfills/type_traits.hpp>
 #include <ArduinoJson/Variant/VariantContent.hpp>
 
-#include <stdint.h>  // int8_t, int16_t
+ARDUINOJSON_BEGIN_PRIVATE_NAMESPACE
 
-namespace ARDUINOJSON_NAMESPACE {
-
-typedef conditional<sizeof(void*) <= 2, int8_t, int16_t>::type VariantSlotDiff;
-
-class VairantData;
+struct StringNode;
 
 class VariantSlot {
   // CAUTION: same layout as VariantData
   // we cannot use composition because it adds padding
   // (+20% on ESP8266 for example)
-  VariantContent _content;
-  uint8_t _flags;
-  VariantSlotDiff _next;
-  const char* _key;
+  VariantContent content_;
+  uint8_t flags_;
+  SlotId next_;
+  const char* key_;
 
  public:
-  // Must be a POD!
-  // - no constructor
-  // - no destructor
-  // - no virtual
-  // - no inheritance
+  // Placement new
+  static void* operator new(size_t, void* p) noexcept {
+    return p;
+  }
+
+  static void operator delete(void*, void*) noexcept {}
+
+  VariantSlot() : flags_(0), next_(NULL_SLOT), key_(0) {}
 
   VariantData* data() {
-    return reinterpret_cast<VariantData*>(&_content);
+    return reinterpret_cast<VariantData*>(&content_);
   }
 
   const VariantData* data() const {
-    return reinterpret_cast<const VariantData*>(&_content);
+    return reinterpret_cast<const VariantData*>(&content_);
   }
 
-  VariantSlot* next() {
-    return _next ? this + _next : 0;
+  SlotId next() const {
+    return next_;
   }
 
-  const VariantSlot* next() const {
-    return const_cast<VariantSlot*>(this)->next();
+  void setNext(SlotId slot) {
+    next_ = slot;
   }
 
-  VariantSlot* next(size_t distance) {
-    VariantSlot* slot = this;
-    while (distance--) {
-      if (!slot->_next) return 0;
-      slot += slot->_next;
-    }
-    return slot;
+  void setKey(const char* k) {
+    ARDUINOJSON_ASSERT(k);
+    flags_ &= VALUE_MASK;
+    key_ = k;
   }
 
-  const VariantSlot* next(size_t distance) const {
-    return const_cast<VariantSlot*>(this)->next(distance);
-  }
-
-  void setNext(VariantSlot* slot) {
-    _next = VariantSlotDiff(slot ? slot - this : 0);
-  }
-
-  void setNextNotNull(VariantSlot* slot) {
-    ARDUINOJSON_ASSERT(slot != 0);
-    _next = VariantSlotDiff(slot - this);
-  }
-
-  void setOwnedKey(not_null<const char*> k) {
-    _flags |= KEY_IS_OWNED;
-    _key = k.get();
-  }
-
-  void setLinkedKey(not_null<const char*> k) {
-    _flags &= VALUE_MASK;
-    _key = k.get();
+  void setKey(StringNode* k) {
+    ARDUINOJSON_ASSERT(k);
+    flags_ |= OWNED_KEY_BIT;
+    key_ = k->data;
   }
 
   const char* key() const {
-    return _key;
+    return key_;
   }
 
   bool ownsKey() const {
-    return (_flags & KEY_IS_OWNED) != 0;
-  }
-
-  void clear() {
-    _next = 0;
-    _flags = 0;
-    _key = 0;
+    return (flags_ & OWNED_KEY_BIT) != 0;
   }
 };
 
-}  // namespace ARDUINOJSON_NAMESPACE
+inline VariantData* slotData(VariantSlot* slot) {
+  return reinterpret_cast<VariantData*>(slot);
+}
+
+// Returns the size (in bytes) of an array with n elements.
+constexpr size_t sizeofArray(size_t n) {
+  return n * sizeof(VariantSlot);
+}
+
+// Returns the size (in bytes) of an object with n members.
+constexpr size_t sizeofObject(size_t n) {
+  return n * sizeof(VariantSlot);
+}
+
+ARDUINOJSON_END_PRIVATE_NAMESPACE

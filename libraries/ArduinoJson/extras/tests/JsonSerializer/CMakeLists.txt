@@ -1,8 +1,9 @@
-# ArduinoJson - arduinojson.org
-# Copyright Benoit Blanchon 2014-2019
+# ArduinoJson - https://arduinojson.org
+# Copyright © 2014-2024, Benoit BLANCHON
 # MIT License
 
 add_executable(JsonSerializerTests
+	CustomWriter.cpp
 	JsonArray.cpp
 	JsonArrayPretty.cpp
 	JsonObject.cpp
@@ -13,5 +14,9 @@ add_executable(JsonSerializerTests
 	std_string.cpp
 )
 
-target_link_libraries(JsonSerializerTests catch)
 add_test(JsonSerializer JsonSerializerTests)
+
+set_tests_properties(JsonSerializer
+	PROPERTIES
+		LABELS "Catch"
+)

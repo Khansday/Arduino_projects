@@ -1,119 +1,170 @@
-// ArduinoJson - arduinojson.org
-// Copyright Benoit Blanchon 2014-2019
+// ArduinoJson - https://arduinojson.org
+// Copyright © 2014-2024, Benoit BLANCHON
 // MIT License
 
 #include <ArduinoJson.h>
 #include <catch.hpp>
 
-TEST_CASE("JsonVariant and strings") {
-  DynamicJsonDocument doc(4096);
+#include "Allocators.hpp"
+#include "Literals.hpp"
+
+using ArduinoJson::detail::sizeofObject;
+
+enum ErrorCode { ERROR_01 = 1, ERROR_10 = 10 };
+
+TEST_CASE("JsonVariant::set() when there is enough memory") {
+  JsonDocument doc;
   JsonVariant variant = doc.to<JsonVariant>();
 
-  SECTION("stores const char* by reference") {
+  SECTION("const char*") {
     char str[16];
 
     strcpy(str, "hello");
-    variant.set(static_cast<const char *>(str));
+    bool result = variant.set(static_cast<const char*>(str));
     strcpy(str, "world");
 
-    REQUIRE(variant == "world");
+    REQUIRE(result == true);
+    REQUIRE(variant == "world");  // stores by pointer
   }
 
-  SECTION("stores char* by copy") {
-    char str[16];
+  SECTION("(const char*)0") {
+    bool result = variant.set(static_cast<const char*>(0));
 
-    strcpy(str, "hello");
-    variant.set(str);
-    strcpy(str, "world");
-
-    REQUIRE(variant == "hello");
+    REQUIRE(result == true);
+    REQUIRE(variant.isNull());
   }
 
-  SECTION("stores unsigned char* by copy") {
+  SECTION("char*") {
     char str[16];
 
     strcpy(str, "hello");
-    variant.set(reinterpret_cast<unsigned char *>(str));
+    bool result = variant.set(str);
     strcpy(str, "world");
 
-    REQUIRE(variant == "hello");
+    REQUIRE(result == true);
+    REQUIRE(variant == "hello");  // stores by copy
   }
 
-  SECTION("stores signed char* by copy") {
+  SECTION("(char*)0") {
+    bool result = variant.set(static_cast<char*>(0));
+
+    REQUIRE(result == true);
+    REQUIRE(variant.isNull());
+  }
+
+  SECTION("unsigned char*") {
     char str[16];
 
     strcpy(str, "hello");
-    variant.set(reinterpret_cast<signed char *>(str));
+    bool result = variant.set(reinterpret_cast<unsigned char*>(str));
     strcpy(str, "world");
 
-    REQUIRE(variant == "hello");
+    REQUIRE(result == true);
+    REQUIRE(variant == "hello");  // stores by copy
+  }
+
+  SECTION("signed char*") {
+    char str[16];
+
+    strcpy(str, "hello");
+    bool result = variant.set(reinterpret_cast<signed char*>(str));
+    strcpy(str, "world");
+
+    REQUIRE(result == true);
+    REQUIRE(variant == "hello");  // stores by copy
   }
 
 #ifdef HAS_VARIABLE_LENGTH_ARRAY
-  SECTION("stores VLA by copy") {
-    int n = 16;
+  SECTION("VLA") {
+    size_t n = 16;
     char str[n];
 
     strcpy(str, "hello");
-    variant.set(str);
+    bool result = variant.set(str);
     strcpy(str, "world");
 
-    REQUIRE(variant == "hello");
+    REQUIRE(result == true);
+    REQUIRE(variant == "hello");  // stores by copy
   }
 #endif
 
-  SECTION("stores std::string by copy") {
+  SECTION("std::string") {
     std::string str;
 
     str = "hello";
-    variant.set(str);
+    bool result = variant.set(str);
     str.replace(0, 5, "world");
 
-    REQUIRE(variant == "hello");
+    REQUIRE(result == true);
+    REQUIRE(variant == "hello");  // stores by copy
   }
 
-  SECTION("stores static JsonString by reference") {
+  SECTION("static JsonString") {
     char str[16];
 
     strcpy(str, "hello");
-    variant.set(JsonString(str, true));
+    bool result = variant.set(JsonString(str, JsonString::Linked));
     strcpy(str, "world");
 
-    REQUIRE(variant == "hello");
+    REQUIRE(result == true);
+    REQUIRE(variant == "world");  // stores by pointer
   }
 
-  SECTION("stores non-static JsonString by copy") {
+  SECTION("non-static JsonString") {
     char str[16];
 
     strcpy(str, "hello");
-    variant.set(JsonString(str, false));
+    bool result = variant.set(JsonString(str, JsonString::Copied));
     strcpy(str, "world");
 
-    REQUIRE(variant == "hello");
+    REQUIRE(result == true);
+    REQUIRE(variant == "hello");  // stores by copy
+  }
+
+  SECTION("enum") {
+    ErrorCode code = ERROR_10;
+
+    bool result = variant.set(code);
+
+    REQUIRE(result == true);
+    REQUIRE(variant.is<int>() == true);
+    REQUIRE(variant.as<int>() == 10);
   }
 }
 
-TEST_CASE("JsonVariant with not enough memory") {
-  StaticJsonDocument<1> doc;
+TEST_CASE("JsonVariant::set() with not enough memory") {
+  JsonDocument doc(FailingAllocator::instance());
 
   JsonVariant v = doc.to<JsonVariant>();
 
   SECTION("std::string") {
-    v.set(std::string("hello world!!"));
+    bool result = v.set("hello world!!"_s);
+
+    REQUIRE(result == false);
     REQUIRE(v.isNull());
   }
 
   SECTION("Serialized<std::string>") {
-    v.set(serialized(std::string("hello world!!")));
+    bool result = v.set(serialized("hello world!!"_s));
+
+    REQUIRE(result == false);
+    REQUIRE(v.isNull());
+  }
+
+  SECTION("char*") {
+    char s[] = "hello world!!";
+    bool result = v.set(s);
+
+    REQUIRE(result == false);
     REQUIRE(v.isNull());
   }
 }
 
-TEST_CASE("JsonVariant::set(DynamicJsonDocument)") {
-  DynamicJsonDocument doc1(1024);
+TEST_CASE("JsonVariant::set(JsonDocument)") {
+  JsonDocument doc1;
   doc1["hello"] = "world";
 
-  DynamicJsonDocument doc2(1024);
+  JsonDocument doc2;
   JsonVariant v = doc2.to<JsonVariant>();
 
   // Should copy the doc
@@ -123,4 +174,49 @@ TEST_CASE("JsonVariant::set(DynamicJsonDocument)") {
   std::string json;
   serializeJson(doc2, json);
   REQUIRE(json == "{\"hello\":\"world\"}");
+}
+
+TEST_CASE("JsonVariant::set() releases the previous value") {
+  SpyingAllocator spy;
+  JsonDocument doc(&spy);
+  doc["hello"] = "world"_s;
+  spy.clearLog();
+
+  JsonVariant v = doc["hello"];
+
+  SECTION("int") {
+    v.set(42);
+    REQUIRE(spy.log() == AllocatorLog{
+                             Deallocate(sizeofString("world")),
+                         });
+  }
+
+  SECTION("bool") {
+    v.set(false);
+    REQUIRE(spy.log() == AllocatorLog{
+                             Deallocate(sizeofString("world")),
+                         });
+  }
+
+  SECTION("const char*") {
+    v.set("hello");
+    REQUIRE(spy.log() == AllocatorLog{
+                             Deallocate(sizeofString("world")),
+                         });
+  }
+
+  SECTION("float") {
+    v.set(1.2);
+    REQUIRE(spy.log() == AllocatorLog{
+                             Deallocate(sizeofString("world")),
+                         });
+  }
+
+  SECTION("Serialized<const char*>") {
+    v.set(serialized("[]"));
+    REQUIRE(spy.log() == AllocatorLog{
+                             Deallocate(sizeofString("world")),
+                             Allocate(sizeofString("[]")),
+                         });
+  }
 }

@@ -1,17 +1,32 @@
-// ArduinoJson - arduinojson.org
-// Copyright Benoit Blanchon 2014-2019
+// ArduinoJson - https://arduinojson.org
+// Copyright © 2014-2024, Benoit BLANCHON
 // MIT License
 
 #pragma once
 
-#include <ArduinoJson/Configuration.hpp>
+#include <ArduinoJson/Namespace.hpp>
+#include <ArduinoJson/Polyfills/assert.hpp>
 
-namespace ARDUINOJSON_NAMESPACE {
+ARDUINOJSON_BEGIN_PUBLIC_NAMESPACE
 
-struct NestingLimit {
-  NestingLimit() : value(ARDUINOJSON_DEFAULT_NESTING_LIMIT) {}
-  explicit NestingLimit(uint8_t n) : value(n) {}
+namespace DeserializationOption {
+class NestingLimit {
+ public:
+  NestingLimit() : value_(ARDUINOJSON_DEFAULT_NESTING_LIMIT) {}
+  explicit NestingLimit(uint8_t n) : value_(n) {}
 
-  uint8_t value;
+  NestingLimit decrement() const {
+    ARDUINOJSON_ASSERT(value_ > 0);
+    return NestingLimit(static_cast<uint8_t>(value_ - 1));
+  }
+
+  bool reached() const {
+    return value_ == 0;
+  }
+
+ private:
+  uint8_t value_;
 };
-}  // namespace ARDUINOJSON_NAMESPACE
+}  // namespace DeserializationOption
+
+ARDUINOJSON_END_PUBLIC_NAMESPACE

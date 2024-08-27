@@ -1,21 +1,26 @@
-# ArduinoJson - arduinojson.org
-# Copyright Benoit Blanchon 2014-2019
+# ArduinoJson - https://arduinojson.org
+# Copyright © 2014-2024, Benoit BLANCHON
 # MIT License
 
 add_executable(JsonDeserializerTests
 	array.cpp
-	array_static.cpp
 	DeserializationError.cpp
-	incomplete_input.cpp
+	destination_types.cpp
+	errors.cpp
+	filter.cpp
 	input_types.cpp
-	number.cpp
-	invalid_input.cpp
 	misc.cpp
 	nestingLimit.cpp
+	number.cpp
 	object.cpp
-	object_static.cpp
 	string.cpp
 )
 
-target_link_libraries(JsonDeserializerTests catch)
+set_target_properties(JsonDeserializerTests PROPERTIES UNITY_BUILD OFF)
+
 add_test(JsonDeserializer JsonDeserializerTests)
+
+set_tests_properties(JsonDeserializer
+	PROPERTIES
+		LABELS "Catch"
+)

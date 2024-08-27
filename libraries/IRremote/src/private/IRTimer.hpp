@@ -52,12 +52,13 @@ void enableSendPWMByTimer();
 void disableSendPWMByTimer();
 void timerConfigForSend(uint16_t aFrequencyKHz);
 
-#if defined(SEND_PWM_BY_TIMER) && ( (defined(ESP32) || defined(ARDUINO_ARCH_RP2040) || defined(PARTICLE)) || defined(ARDUINO_ARCH_MBED) )
-#define SEND_PWM_DOES_NOT_USE_RECEIVE_TIMER // Receive timer and send generation are independent, so it is recommended to always define SEND_PWM_BY_TIMER
+// SEND_PWM_BY_TIMER is defined in IRremote.hpp line 195.
+#if  defined(SEND_PWM_BY_TIMER) && ( (defined(ESP32) || defined(ARDUINO_ARCH_RP2040) || defined(PARTICLE)) || defined(ARDUINO_ARCH_MBED) )
+#define SEND_PWM_DOES_NOT_USE_RECEIVE_TIMER // Receive timer and send generation timer are independent here.
 #endif
 
-#if defined(IR_SEND_PIN) && defined(SEND_PWM_BY_TIMER) && !defined(SEND_PWM_DOES_NOT_USE_RECEIVE_TIMER) // For e.g ESP32 IR_SEND_PIN definition is useful
-#undef IR_SEND_PIN // avoid warning below, user warning is done at IRremote.hpp
+#if defined(IR_SEND_PIN) && defined(SEND_PWM_BY_TIMER) && !defined(SEND_PWM_DOES_NOT_USE_RECEIVE_TIMER) // For ESP32 etc. IR_SEND_PIN definition is useful
+#undef IR_SEND_PIN // To avoid "warning: "IR_SEND_PIN" redefined". The user warning is done at IRremote.hpp line 202.
 #endif
 
 // Macros for enabling timers for development
@@ -180,7 +181,7 @@ void disableSendPWMByTimer() {
 
 #elif defined(__AVR_ATtiny816__) || defined(__AVR_ATtiny1614__) || defined(__AVR_ATtiny1616__) || defined(__AVR_ATtiny3216__) || defined(__AVR_ATtiny3217__) // e.g. TinyCore boards
 #  if !defined(IR_USE_AVR_TIMER_A) && !defined(IR_USE_AVR_TIMER_D)
-#define IR_USE_AVR_TIMER_A // use this if you use MegaTinyCore, Tone is on TCB and millis() on TCD
+#define IR_USE_AVR_TIMER_A // use this if you use megaTinyCore, Tone is on TCB and millis() on TCD
 //#define IR_USE_AVR_TIMER_D // use this if you use TinyCore
 #  endif
 
@@ -1093,7 +1094,6 @@ void timerConfigForSend(uint16_t aFrequencyKHz) {
 
 /**********************************************
  * Uno R4 boards
- * The FspTimer uses undocumented
  **********************************************/
 #elif defined(ARDUINO_ARCH_RENESAS)
 #include "FspTimer.h"
@@ -1397,6 +1397,9 @@ void timerConfigForSend(uint16_t aFrequencyKHz) {
 }
 #  endif // defined(SEND_PWM_BY_TIMER)
 
+/**********************************************************
+ * ESP8266 boards
+ **********************************************************/
 #elif defined(ESP8266)
 #  if defined(SEND_PWM_BY_TIMER)
 #error "No support for hardware PWM generation for ESP8266"
@@ -1411,7 +1414,7 @@ void timerEnableReceiveInterrupt() {
     timer1_attachInterrupt(&IRReceiveTimerInterruptHandler); // enables interrupt too
 }
 void timerDisableReceiveInterrupt() {
-    timer1_detachInterrupt(); // disables interrupt too }
+    timer1_detachInterrupt(); // disables interrupt too
 }
 
 void timerConfigForReceive() {
@@ -1431,45 +1434,49 @@ void timerConfigForReceive() {
  * so it is recommended to always define SEND_PWM_BY_TIMER
  **********************************************************/
 #elif defined(ESP32)
+#  if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+#error This library does not work with ESP32 core 3.x. Please use ESP 2.0.17 core. You are kindly invited to port and document the code to 3.x, to fix this problem!
+#  endif
+
 // Variables specific to the ESP32.
 // the ledc functions behave like hardware timers for us :-), so we do not require our own soft PWM generation code.
 hw_timer_t *s50usTimer = NULL; // set by timerConfigForReceive()
 
-
-#  if !defined(SEND_AND_RECEIVE_TIMER_LEDC_CHANNEL)
-#define SEND_AND_RECEIVE_TIMER_LEDC_CHANNEL 0 // The channel used for PWM 0 to 7 are high speed PWM channels
+#  if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3, 0, 0) &&  !defined(SEND_LEDC_CHANNEL)
+#define SEND_LEDC_CHANNEL 0 // The channel used for PWM 0 to 7 are high speed PWM channels
 #  endif
 
 void timerEnableReceiveInterrupt() {
     timerAlarmEnable(s50usTimer);
 }
 
-#if !defined(ESP_ARDUINO_VERSION)
+#  if !defined(ESP_ARDUINO_VERSION)
 #define ESP_ARDUINO_VERSION 0
-#endif
-#if !defined(ESP_ARDUINO_VERSION_VAL)
+#  endif
+#  if !defined(ESP_ARDUINO_VERSION_VAL)
 #define ESP_ARDUINO_VERSION_VAL(major, minor, patch) 202
-#endif
-#if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(2, 0, 2)
+#  endif
+#  if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(2, 0, 2)
 void timerDisableReceiveInterrupt() {
     if (s50usTimer != NULL) {
         timerDetachInterrupt(s50usTimer);
         timerEnd(s50usTimer);
     }
 }
-#else
+#  else
 void timerDisableReceiveInterrupt() {
     if (s50usTimer != NULL) {
         timerAlarmDisable(s50usTimer);
     }
 }
-#endif
+#  endif
 
 // Undefine ISR, because we register/call the plain function IRReceiveTimerInterruptHandler()
 #  if defined(ISR)
 #undef ISR
 #  endif
 
+#  if !defined(DISABLE_CODE_FOR_RECEIVER) // &IRReceiveTimerInterruptHandler is referenced, but not available
 void timerConfigForReceive() {
     // ESP32 has a proper API to setup timers, no weird chip macros needed
     // simply call the readable API versions :)
@@ -1481,25 +1488,54 @@ void timerConfigForReceive() {
     }
     // every 50 us, autoreload = true
 }
+#  endif
+
+#  if !defined(IR_SEND_PIN)
+uint8_t sLastSendPin = 0; // To detach before attach, if already attached
+#  endif
 
 #  if defined(SEND_PWM_BY_TIMER)
 void enableSendPWMByTimer() {
-    ledcWrite(SEND_AND_RECEIVE_TIMER_LEDC_CHANNEL, (IR_SEND_DUTY_CYCLE_PERCENT * 256) / 100); //  * 256 since we have 8 bit resolution
+#    if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+    ledcWrite(SEND_LEDC_CHANNEL, (IR_SEND_DUTY_CYCLE_PERCENT * 256) / 100); //  * 256 since we have 8 bit resolution
+#    else
+    ledcWrite(IrSender.sendPin, (IR_SEND_DUTY_CYCLE_PERCENT * 256) / 100); // New API
+#    endif
 }
 void disableSendPWMByTimer() {
-    ledcWrite(SEND_AND_RECEIVE_TIMER_LEDC_CHANNEL, 0);
+#    if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+    ledcWrite(SEND_LEDC_CHANNEL, 0);
+#    else
+    ledcWrite(IrSender.sendPin, 0); // New API
+#    endif
 }
 
 /*
- * timerConfigForSend() is used exclusively by IRsend::enableIROut()
- * ledcWrite since ESP 2.0.2 does not work if pin mode is set. Disable receive interrupt if it uses the same resource
+ * timerConfigForSend() is used exclusively by IRsend::enableIROut() (or enableHighFrequencyIROut())
+ * ledcWrite since ESP 2.0.2 does not work if pin mode is set.
  */
 void timerConfigForSend(uint16_t aFrequencyKHz) {
-    ledcSetup(SEND_AND_RECEIVE_TIMER_LEDC_CHANNEL, aFrequencyKHz * 1000, 8);  // 8 bit PWM resolution
-#    if defined(IR_SEND_PIN)
-    ledcAttachPin(IR_SEND_PIN, SEND_AND_RECEIVE_TIMER_LEDC_CHANNEL);  // bind pin to channel
-#    else
-    ledcAttachPin(IrSender.sendPin, SEND_AND_RECEIVE_TIMER_LEDC_CHANNEL);  // bind pin to channel
+#    if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+    ledcSetup(SEND_LEDC_CHANNEL, aFrequencyKHz * 1000, 8);  // 8 bit PWM resolution
+#      if defined(IR_SEND_PIN)
+    ledcAttachPin(IR_SEND_PIN, SEND_LEDC_CHANNEL);  // attach pin to channel
+#      else
+    if(sLastSendPin != 0 && sLastSendPin != IrSender.sendPin){
+        ledcDetachPin(IrSender.sendPin);  // detach pin before new attaching see #1194
+    }
+    ledcAttachPin(IrSender.sendPin, SEND_LEDC_CHANNEL);  // attach pin to channel
+    sLastSendPin = IrSender.sendPin;
+#      endif
+#    else  // New API here
+#      if defined(IR_SEND_PIN)
+    ledcAttach(IR_SEND_PIN, aFrequencyKHz * 1000, 8); // New API
+#      else
+    if(sLastSendPin != 0 && sLastSendPin != IrSender.sendPin){
+        ledcDetach(IrSender.sendPin); // detach pin before new attaching see #1194
+    }
+    ledcAttach(IrSender.sendPin, aFrequencyKHz * 1000, 8); // New API
+    sLastSendPin = IrSender.sendPin;
+#      endif
 #    endif
 }
 #  endif // defined(SEND_PWM_BY_TIMER)

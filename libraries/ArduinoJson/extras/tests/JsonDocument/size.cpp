@@ -1,12 +1,12 @@
-// ArduinoJson - arduinojson.org
-// Copyright Benoit Blanchon 2014-2019
+// ArduinoJson - https://arduinojson.org
+// Copyright © 2014-2024, Benoit BLANCHON
 // MIT License
 
 #include <ArduinoJson.h>
 #include <catch.hpp>
 
 TEST_CASE("JsonDocument::size()") {
-  DynamicJsonDocument doc(4096);
+  JsonDocument doc;
 
   SECTION("returns 0") {
     REQUIRE(doc.size() == 0);

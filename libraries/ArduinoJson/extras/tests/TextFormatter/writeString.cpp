@@ -1,16 +1,16 @@
-// ArduinoJson - arduinojson.org
-// Copyright Benoit Blanchon 2014-2019
+// ArduinoJson - https://arduinojson.org
+// Copyright © 2014-2024, Benoit BLANCHON
 // MIT License
 
 #include <catch.hpp>
 
 #include <ArduinoJson/Json/TextFormatter.hpp>
-#include <ArduinoJson/Serialization/StaticStringWriter.hpp>
+#include <ArduinoJson/Serialization/Writers/StaticStringWriter.hpp>
 
-using namespace ARDUINOJSON_NAMESPACE;
+using namespace ArduinoJson::detail;
 
 void check(const char* input, std::string expected) {
-  char output[1024];
+  char output[64] = {0};
   StaticStringWriter sb(output, sizeof(output));
   TextFormatter<StaticStringWriter> writer(sb);
   writer.writeString(input);
@@ -19,10 +19,6 @@ void check(const char* input, std::string expected) {
 }
 
 TEST_CASE("TextFormatter::writeString()") {
-  SECTION("Null") {
-    check(0, "null");
-  }
-
   SECTION("EmptyString") {
     check("", "\"\"");
   }

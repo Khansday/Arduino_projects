@@ -1,12 +1,17 @@
-// ArduinoJson - arduinojson.org
-// Copyright Benoit Blanchon 2014-2019
+// ArduinoJson - https://arduinojson.org
+// Copyright © 2014-2024, Benoit BLANCHON
 // MIT License
 
 #include <ArduinoJson.h>
 #include <catch.hpp>
 
+#include "Allocators.hpp"
+
+using ArduinoJson::detail::sizeofArray;
+
 TEST_CASE("deserialize JSON array") {
-  DynamicJsonDocument doc(4096);
+  SpyingAllocator spy;
+  JsonDocument doc(&spy);
 
   SECTION("An empty array") {
     DeserializationError err = deserializeJson(doc, "[]");
@@ -99,8 +104,8 @@ TEST_CASE("deserialize JSON array") {
 
       REQUIRE(err == DeserializationError::Ok);
       REQUIRE(2 == arr.size());
-      REQUIRE(arr[0].as<char*>() == 0);
-      REQUIRE(arr[1].as<char*>() == 0);
+      REQUIRE(arr[0].as<const char*>() == 0);
+      REQUIRE(arr[1].as<const char*>() == 0);
     }
   }
 
@@ -166,155 +171,6 @@ TEST_CASE("deserialize JSON array") {
     SECTION("Closing double quotes missing") {
       DeserializationError err = deserializeJson(doc, "[\']");
 
-      REQUIRE(err == DeserializationError::IncompleteInput);
-    }
-  }
-
-  SECTION("Block comments") {
-    SECTION("Before opening bracket") {
-      DeserializationError err =
-          deserializeJson(doc, "/*COMMENT*/  [\"hello\"]");
-      JsonArray arr = doc.as<JsonArray>();
-
-      REQUIRE(err == DeserializationError::Ok);
-      REQUIRE(1 == arr.size());
-      REQUIRE(arr[0] == "hello");
-    }
-
-    SECTION("After opening bracket") {
-      DeserializationError err =
-          deserializeJson(doc, "[/*COMMENT*/ \"hello\"]");
-      JsonArray arr = doc.as<JsonArray>();
-
-      REQUIRE(err == DeserializationError::Ok);
-      REQUIRE(1 == arr.size());
-      REQUIRE(arr[0] == "hello");
-    }
-
-    SECTION("Before closing bracket") {
-      DeserializationError err = deserializeJson(doc, "[\"hello\"/*COMMENT*/]");
-      JsonArray arr = doc.as<JsonArray>();
-
-      REQUIRE(err == DeserializationError::Ok);
-      REQUIRE(1 == arr.size());
-      REQUIRE(arr[0] == "hello");
-    }
-
-    SECTION("After closing bracket") {
-      DeserializationError err = deserializeJson(doc, "[\"hello\"]/*COMMENT*/");
-      JsonArray arr = doc.as<JsonArray>();
-
-      REQUIRE(err == DeserializationError::Ok);
-      REQUIRE(1 == arr.size());
-      REQUIRE(arr[0] == "hello");
-    }
-
-    SECTION("Before comma") {
-      DeserializationError err =
-          deserializeJson(doc, "[\"hello\"/*COMMENT*/,\"world\"]");
-      JsonArray arr = doc.as<JsonArray>();
-
-      REQUIRE(err == DeserializationError::Ok);
-      REQUIRE(2 == arr.size());
-      REQUIRE(arr[0] == "hello");
-      REQUIRE(arr[1] == "world");
-    }
-
-    SECTION("After comma") {
-      DeserializationError err =
-          deserializeJson(doc, "[\"hello\",/*COMMENT*/ \"world\"]");
-      JsonArray arr = doc.as<JsonArray>();
-
-      REQUIRE(err == DeserializationError::Ok);
-      REQUIRE(2 == arr.size());
-      REQUIRE(arr[0] == "hello");
-      REQUIRE(arr[1] == "world");
-    }
-
-    SECTION("/*/") {
-      DeserializationError err = deserializeJson(doc, "[/*/\n]");
-      REQUIRE(err == DeserializationError::IncompleteInput);
-    }
-
-    SECTION("Unfinished comment") {
-      DeserializationError err = deserializeJson(doc, "[/*COMMENT]");
-      REQUIRE(err == DeserializationError::IncompleteInput);
-    }
-
-    SECTION("Final slash missing") {
-      DeserializationError err = deserializeJson(doc, "[/*COMMENT*]");
-      REQUIRE(err == DeserializationError::IncompleteInput);
-    }
-  }
-
-  SECTION("Trailing comments") {
-    SECTION("Before opening bracket") {
-      DeserializationError err =
-          deserializeJson(doc, "//COMMENT\n\t[\"hello\"]");
-      JsonArray arr = doc.as<JsonArray>();
-
-      REQUIRE(err == DeserializationError::Ok);
-      REQUIRE(1 == arr.size());
-      REQUIRE(arr[0] == "hello");
-    }
-
-    SECTION("After opening bracket") {
-      DeserializationError err = deserializeJson(doc, "[//COMMENT\n\"hello\"]");
-      JsonArray arr = doc.as<JsonArray>();
-
-      REQUIRE(err == DeserializationError::Ok);
-      REQUIRE(1 == arr.size());
-      REQUIRE(arr[0] == "hello");
-    }
-
-    SECTION("Before closing bracket") {
-      DeserializationError err =
-          deserializeJson(doc, "[\"hello\"//COMMENT\r\n]");
-      JsonArray arr = doc.as<JsonArray>();
-
-      REQUIRE(err == DeserializationError::Ok);
-      REQUIRE(1 == arr.size());
-      REQUIRE(arr[0] == "hello");
-    }
-
-    SECTION("After closing bracket") {
-      DeserializationError err = deserializeJson(doc, "[\"hello\"]//COMMENT\n");
-      JsonArray arr = doc.as<JsonArray>();
-
-      REQUIRE(err == DeserializationError::Ok);
-      REQUIRE(1 == arr.size());
-      REQUIRE(arr[0] == "hello");
-    }
-
-    SECTION("Before comma") {
-      DeserializationError err =
-          deserializeJson(doc, "[\"hello\"//COMMENT\n,\"world\"]");
-      JsonArray arr = doc.as<JsonArray>();
-
-      REQUIRE(err == DeserializationError::Ok);
-      REQUIRE(2 == arr.size());
-      REQUIRE(arr[0] == "hello");
-      REQUIRE(arr[1] == "world");
-    }
-
-    SECTION("After comma") {
-      DeserializationError err =
-          deserializeJson(doc, "[\"hello\",//COMMENT\n\"world\"]");
-      JsonArray arr = doc.as<JsonArray>();
-
-      REQUIRE(err == DeserializationError::Ok);
-      REQUIRE(2 == arr.size());
-      REQUIRE(arr[0] == "hello");
-      REQUIRE(arr[1] == "world");
-    }
-
-    SECTION("Invalid comment") {
-      DeserializationError err = deserializeJson(doc, "[/COMMENT\n]");
-      REQUIRE(err == DeserializationError::InvalidInput);
-    }
-
-    SECTION("End document with comment") {
-      DeserializationError err = deserializeJson(doc, "[//COMMENT");
       REQUIRE(err == DeserializationError::IncompleteInput);
     }
   }
@@ -393,10 +249,71 @@ TEST_CASE("deserialize JSON array") {
 
   SECTION("Should clear the JsonArray") {
     deserializeJson(doc, "[1,2,3,4]");
-    deserializeJson(doc, "[]");
-    JsonArray arr = doc.as<JsonArray>();
+    spy.clearLog();
 
+    deserializeJson(doc, "[]");
+
+    JsonArray arr = doc.as<JsonArray>();
     REQUIRE(arr.size() == 0);
-    REQUIRE(doc.memoryUsage() == JSON_ARRAY_SIZE(0));
+    REQUIRE(spy.log() == AllocatorLog{
+                             Deallocate(sizeofArray(4)),
+                         });
+  }
+}
+
+TEST_CASE("deserialize JSON array under memory constraints") {
+  TimebombAllocator timebomb(100);
+  SpyingAllocator spy(&timebomb);
+  JsonDocument doc(&spy);
+
+  SECTION("empty array requires no allocation") {
+    timebomb.setCountdown(0);
+    char input[] = "[]";
+
+    DeserializationError err = deserializeJson(doc, input);
+
+    REQUIRE(err == DeserializationError::Ok);
+  }
+
+  SECTION("allocation of pool list fails") {
+    timebomb.setCountdown(0);
+    char input[] = "[1]";
+
+    DeserializationError err = deserializeJson(doc, input);
+
+    REQUIRE(err == DeserializationError::NoMemory);
+    REQUIRE(doc.as<std::string>() == "[]");
+  }
+
+  SECTION("allocation of pool fails") {
+    timebomb.setCountdown(0);
+    char input[] = "[1]";
+
+    DeserializationError err = deserializeJson(doc, input);
+
+    REQUIRE(err == DeserializationError::NoMemory);
+    REQUIRE(doc.as<std::string>() == "[]");
+  }
+
+  SECTION("allocation of string fails in array") {
+    timebomb.setCountdown(1);
+    char input[] = "[0,\"hi!\"]";
+
+    DeserializationError err = deserializeJson(doc, input);
+
+    REQUIRE(err == DeserializationError::NoMemory);
+    REQUIRE(doc.as<std::string>() == "[0,null]");
+  }
+
+  SECTION("don't store space characters") {
+    deserializeJson(doc, "  [ \"1234567\" ] ");
+
+    REQUIRE(spy.log() ==
+            AllocatorLog{
+                Allocate(sizeofPool()),
+                Allocate(sizeofStringBuffer()),
+                Reallocate(sizeofStringBuffer(), sizeofString("1234567")),
+                Reallocate(sizeofPool(), sizeofArray(1)),
+            });
   }
 }

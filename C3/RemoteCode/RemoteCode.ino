@@ -40,8 +40,9 @@ void setup() {
 
 void loop() {
   IrReceiver.decode();
-  IrReceiver.resume(); // Enable receiving of the next value
+  IrReceiver.resume(); 
   button = IrReceiver.decodedIRData.command;
+
   switch(button){
     case (0x45):    //button 1
     //do something
@@ -50,7 +51,10 @@ void loop() {
     case (0x9):    //button 9
     //do something
     //MAKE THE ROBOT LINE FOLLOWER
-    break;
+    break; 
   }
 }
+
+
+
 

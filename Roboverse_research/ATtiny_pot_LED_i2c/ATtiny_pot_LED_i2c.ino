@@ -46,11 +46,11 @@ void requestEvent() {
   int potValue = analogRead(potPin);
   uint8_t potValue_H = potValue / 256;
   uint8_t potValue_L = potValue - (potValue_H*256);
-  uint8_t dataArray [] = {potValue_H,potValue_L};
-
+  //uint8_t dataArray [] = {potValue_H,potValue_L};
+  uint8_t dataArray [] = {2};
   // Send the potentiometer reading to the master
-  Wire.write(dataArray, sizeof(dataArray));
-
+  //Wire.write(dataArray, sizeof(dataArray));
+  Wire.write(50); // respond with message of 6 bytes
   // Update the lastCommunicationTime when communication occurs
   lastCommunicationTime = millis();
 }

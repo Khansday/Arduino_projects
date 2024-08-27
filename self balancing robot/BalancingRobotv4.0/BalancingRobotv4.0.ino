@@ -226,7 +226,7 @@ void balance_robot(){
 
 void stop(){
   digitalWrite(M1_d , LOW);
-    digitalWrite(M1_dr , LOW);
-    digitalWrite(M2_d , LOW);
-    digitalWrite(M2_dr , LOW);
+  digitalWrite(M1_dr , LOW);
+  digitalWrite(M2_d , LOW);
+  digitalWrite(M2_dr , LOW);
 }

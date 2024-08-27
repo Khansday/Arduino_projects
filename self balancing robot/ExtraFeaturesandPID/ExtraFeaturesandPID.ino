@@ -22,14 +22,14 @@ float tau = 0.98;
 float gyro_y_cal = 195;
 
 //pins for the motor driver
-int M1_d = 7;
-int M1_dr = 8;
+int M1_d = 8;
+int M1_dr = 7;
 int M1_speed = 6;
-int M2_d = 9;
-int M2_dr = 10;
+int M2_d = 10;
+int M2_dr = 9;
 int M2_speed = 11;
-int max_speed = 80; 
-int min_speed = 40;
+int max_speed = 180; 
+int min_speed = 140;
 
 int pwm;                //value of the speed of the motors
 float err, Kp = 15.00,  Kd = 0, Ki = 0;// error of the PID system and P constant

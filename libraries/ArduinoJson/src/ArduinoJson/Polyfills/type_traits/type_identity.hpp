@@ -1,15 +1,16 @@
-// ArduinoJson - arduinojson.org
-// Copyright Benoit Blanchon 2014-2019
+// ArduinoJson - https://arduinojson.org
+// Copyright © 2014-2024, Benoit BLANCHON
 // MIT License
 
 #pragma once
 
 #include "integral_constant.hpp"
 
-namespace ARDUINOJSON_NAMESPACE {
+ARDUINOJSON_BEGIN_PRIVATE_NAMESPACE
 
 template <typename T>
 struct type_identity {
   typedef T type;
 };
-}  // namespace ARDUINOJSON_NAMESPACE
+
+ARDUINOJSON_END_PRIVATE_NAMESPACE

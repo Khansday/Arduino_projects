@@ -2,18 +2,8 @@
 #include <catch.hpp>
 #include <limits>
 
-template <typename T>
-void check(T value, const std::string &expected) {
-  DynamicJsonDocument doc(4096);
-  doc.to<JsonVariant>().set(value);
-  char buffer[256] = "";
-  size_t returnValue = serializeJson(doc, buffer, sizeof(buffer));
-  REQUIRE(expected == buffer);
-  REQUIRE(expected.size() == returnValue);
-}
-
 TEST_CASE("serializeJson(MemberProxy)") {
-  DynamicJsonDocument doc(4096);
+  JsonDocument doc;
   deserializeJson(doc, "{\"hello\":42}");
   JsonObject obj = doc.as<JsonObject>();
   std::string result;
@@ -24,7 +14,7 @@ TEST_CASE("serializeJson(MemberProxy)") {
 }
 
 TEST_CASE("serializeJson(ElementProxy)") {
-  DynamicJsonDocument doc(4096);
+  JsonDocument doc;
   deserializeJson(doc, "[42]");
   JsonArray arr = doc.as<JsonArray>();
   std::string result;
@@ -35,7 +25,7 @@ TEST_CASE("serializeJson(ElementProxy)") {
 }
 
 TEST_CASE("serializeJson(JsonVariantSubscript)") {
-  DynamicJsonDocument doc(4096);
+  JsonDocument doc;
   deserializeJson(doc, "[42]");
   JsonVariant var = doc.as<JsonVariant>();
   std::string result;

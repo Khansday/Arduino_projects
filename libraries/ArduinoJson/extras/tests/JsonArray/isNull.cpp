@@ -1,34 +1,32 @@
-// ArduinoJson - arduinojson.org
-// Copyright Benoit Blanchon 2014-2019
+// ArduinoJson - https://arduinojson.org
+// Copyright © 2014-2024, Benoit BLANCHON
 // MIT License
 
 #include <ArduinoJson.h>
 #include <catch.hpp>
 
 TEST_CASE("JsonArray::isNull()") {
-  DynamicJsonDocument doc(4096);
-
   SECTION("returns true") {
     JsonArray arr;
     REQUIRE(arr.isNull() == true);
   }
 
   SECTION("returns false") {
+    JsonDocument doc;
     JsonArray arr = doc.to<JsonArray>();
     REQUIRE(arr.isNull() == false);
   }
 }
 
-TEST_CASE("JsonArrayConst::isNull()") {
-  DynamicJsonDocument doc(4096);
-
-  SECTION("returns true") {
-    JsonArrayConst arr;
-    REQUIRE(arr.isNull() == true);
+TEST_CASE("JsonArray::operator bool()") {
+  SECTION("returns false") {
+    JsonArray arr;
+    REQUIRE(static_cast<bool>(arr) == false);
   }
 
-  SECTION("returns false") {
-    JsonArrayConst arr = doc.to<JsonArray>();
-    REQUIRE(arr.isNull() == false);
+  SECTION("returns true") {
+    JsonDocument doc;
+    JsonArray arr = doc.to<JsonArray>();
+    REQUIRE(static_cast<bool>(arr) == true);
   }
 }

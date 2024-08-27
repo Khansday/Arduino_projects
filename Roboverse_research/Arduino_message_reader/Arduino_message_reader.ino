@@ -1,5 +1,6 @@
 
 uint8_t a;
+uint8_t addrs = 0x0a;
 #include <Wire.h>
 
 void setup() {
@@ -12,7 +13,7 @@ void setup() {
 }
 
 void loop() {
-  Wire.requestFrom(8, 1);    // request 1 bytes from slave device #8
+  Wire.requestFrom(addrs, 1);    // request 1 bytes from slave device #8
 
   while (Wire.available()) { // slave may send less than requested
     a = Wire.read(); // receive a byte as character

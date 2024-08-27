@@ -3,19 +3,17 @@ int line_value;
 int detecting_threshold = 100;
 
 void setup() {
-  // put your setup code here, to run once:
   pinMode(line_sensor, INPUT);
   Serial.begin(115200);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  line_value = analogRead(line_sensor);
-  if (line_value < detecting_threshold){
-  Serial.println("WHERE AM I ;(");
+  line_value = analogRead(line_sensor);  //READ THE SIGNAL WIRE
+  if (line_value < detecting_threshold){ //COMPARE THE VALUE READ
+  Serial.println("NOT ON THE LINE");
   }
   else {
-  Serial.println("I AM ON THE LINE :P");
+  Serial.println("ON THE LINE :P");
   }
   delay(100);
 }

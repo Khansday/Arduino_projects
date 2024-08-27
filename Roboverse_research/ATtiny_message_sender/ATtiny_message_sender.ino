@@ -6,8 +6,8 @@ void setup() {
   // Set PB3 as an output
   DDRB |= (1 << DDB3);
 
-  Wire.begin(8);                // join i2c bus with address #8
-  Wire.setClock(100000);  //set speed of 1KHz
+  Wire.begin(10);                // join i2c bus with address #
+  //Wire.setClock(100000);  //set speed of 1KHz
 
   Wire.onRequest(requestEvent); // register event
 }

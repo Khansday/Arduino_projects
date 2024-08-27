@@ -28,8 +28,7 @@ void setup() {
   Wire.beginTransmission(MPU_ADDR); // Begins a transmission to the I2C slave (GY-521 board)
 
   Wire.write(0x6B); // PWR_MGMT_1 register
-  Wire.write(0); // set to zero (wakes up the MPU-6050)
-
++
   setup_mpu_6050_registers();
   //calibrate_sensor(); only do it once
 
