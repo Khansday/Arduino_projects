@@ -157,8 +157,8 @@ void loop() {
         //attitudePrint();
         //attitudeRatePrint();
         //targetPrint(roll_target, pitch_target);
-        targetErrorPrint();
-        //ensorPrint(accel_x_g, accel_y_g, accel_z_g, gyro_x_dps, gyro_y_dps, gyro_z_dps);
+        //targetErrorPrint();
+        //sensorPrint(accel_x_g, accel_y_g, accel_z_g, gyro_x_dps, gyro_y_dps, gyro_z_dps);
         debug_counter = debug_cycles;
       }
     }

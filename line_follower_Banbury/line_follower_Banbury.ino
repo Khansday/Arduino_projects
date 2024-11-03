@@ -2,19 +2,19 @@
 int sensorLeft = A0;
 int sensorRight = A1;
 
-int ENA = 11;
-int IN1 = 10;
-int IN2 = 9;
-int IN3 = 8;
-int IN4 = 7;
-int ENB = 6;
+int ENA = 10;
+int IN1 = 9;
+int IN2 = 8;
+int IN3 = 7;
+int IN4 = 6;
+int ENB = 5;
 
 // Threshold for sensor reading to determine line detection
 int threshold = 300;
 
 // Motor speeds
-int motorSpeed = 200;  //forward speed
-int turnFactor = 0.5;  //turning speed
+int motorSpeed = 150;  //forward speed
+int turnFactor = 0.0;  //turning speed
 
 void setup() {
   // Initialize motor control pins as outputs
@@ -26,7 +26,7 @@ void setup() {
   pinMode(ENB, OUTPUT);
 
   // Initialize serial communication for debugging
-  Serial.begin(9600);
+  Serial.begin(115200);
 }
 
 void loop() {
@@ -46,17 +46,17 @@ void loop() {
     moveForward();
   } else if (leftSensorValue > threshold && rightSensorValue < threshold) {
     // Left sensor detects the line, right sensor does not: Turn right
-    turnRight();
+    sharpturnRight();
   } else if (leftSensorValue < threshold && rightSensorValue > threshold) {
     // Right sensor detects the line, left sensor does not: Turn left
-    turnLeft();
+    sharpturnLeft();
   } else {
     // No sensor detects the line: Stop
     stop();
   }
 
   // Small delay to allow for sensor reading stability
-  delay(50);
+  //delay(50);
 }
 
 void moveForward() {
@@ -83,6 +83,26 @@ void turnLeft() {
   digitalWrite(IN1, LOW);
   digitalWrite(IN2, HIGH);
   analogWrite(ENA, motorSpeed * turnFactor);
+  
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+  analogWrite(ENB, motorSpeed); // Reduce speed for smoother turn
+}
+
+void sharpturnRight() {
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  analogWrite(ENA, motorSpeed); // Reduce speed for smoother turn
+  
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+  analogWrite(ENB, 255 - motorSpeed * turnFactor);
+}
+
+void sharpturnLeft() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  analogWrite(ENA, 255 - motorSpeed * turnFactor);
   
   digitalWrite(IN3, HIGH);
   digitalWrite(IN4, LOW);

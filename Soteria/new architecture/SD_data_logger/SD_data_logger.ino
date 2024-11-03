@@ -1,12 +1,14 @@
 #include <SPI.h>
 #include <SD.h>
+#include <Wire.h>
 
-const int chipSelect = 4; // Define the CS pin, change if needed
+const int chipSelect = 7; // Define the CS pin, change if needed
 File dataFile;
 int fileIndex = 1; // Start with the first file index
+#define NEW_FILE_TIME 10000  //milliseconds to make a new file 
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(250000);
   while (!Serial) {
     ; // Wait for serial port to connect. Needed for native USB port only
   }
@@ -27,7 +29,7 @@ void loop() {
   static unsigned long previousMillis = 0;
   unsigned long currentMillis = millis();
 
-  if (currentMillis - previousMillis >= 5000) { // Every 5 seconds
+  if (currentMillis - previousMillis >= NEW_FILE_TIME) { 
     previousMillis = currentMillis;
     createNewFile();
   }

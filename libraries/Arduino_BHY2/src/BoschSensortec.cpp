@@ -1,6 +1,7 @@
 #include "BoschSensortec.h"
 #include "BoschParser.h"
 #include "sensors/SensorManager.h"
+#include "bosch/bhy2.h"
 
 BoschSensortec::BoschSensortec() : 
   _acknowledgment(SensorNack),
@@ -69,6 +70,7 @@ bool BoschSensortec::begin()
 
   bhy2_update_virtual_sensor_list(&_bhy2);
   bhy2_get_virt_sensor_list(_sensorsPresent, &_bhy2);
+  //bhy2_set_virt_sensor_range(ACCELEROMETER_SENSOR_ID, 8, &device);  DONT KNOW WHATS THE LAST PARAMETER
 
   printSensors();
 
