@@ -199,7 +199,7 @@ void loop() {
       }
     }
 
-        // Check if the drone is tilted beyond the threshold
+    // Check if the drone is tilted beyond the threshold
     if (isTiltedBeyondThreshold()) {
       stopMotors(); // Stop all motors if tilted beyond the threshold
       return; // Exit loop to prevent further execution

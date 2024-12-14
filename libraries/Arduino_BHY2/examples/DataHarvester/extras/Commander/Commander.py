@@ -6,12 +6,15 @@
 # It waits for user input to control the data acquisition operations and the
 # connection to the Arduino board and to save the received data to a CSV file.
 #
-# It establish a serial communication to the board and uses COBS as enconding and
+# It establish a serial communication to the board and uses COBS as encoding and
 # reliable transport protocol.
 #
 # The main thread will always wait for user input while a second one is created
 # to exchange both control and data with the Arduino board.
 # The two threads coordinate via a simple Queue.
+#
+# Install the required module using this command in Windows
+# pip -m install pyreadline3 pyserial cobs
 
 # Thread and Queue
 from threading import Thread
@@ -22,7 +25,8 @@ from datetime import date, datetime
 import struct
 
 # User input
-import readline
+from pyreadline3 import Readline # import readline
+readline = Readline()
 import argparse
 
 # Communication with the Arduino board
@@ -31,7 +35,7 @@ from cobs import cobs
 
 
 # The main serial object
-# Initialise later
+# initialize later
 ser = serial.Serial()
 
 # The function to be run in the Arduino-facing thread
@@ -92,7 +96,7 @@ def receiver(cmd_q, uart, name, tag):
 # The main thread
 if __name__ == '__main__':
 
-    # Parse arugments
+    # Parse arguments
     # - port == Arduino Serial Port
     # - name == Filename
     # - tag == Custom tag to append to filename

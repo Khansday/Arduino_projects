@@ -16,7 +16,8 @@ Sensor temperature(SENSOR_ID_TEMP_WU);      // Temperature with wake-up function
 Sensor humidity(SENSOR_ID_HUM);             // Humidity
 Sensor pressure(SENSOR_ID_BARO);            // Pressure
 SensorBSEC gas(SENSOR_ID_BSEC);              // Air quality sensor (BSEC)
-
+SensorOrientation attitude (SENSOR_ID_ORI);   //Device orientation Euler
+ 
 //THE FOLLWING ARE NEEDED TO CONVERT RAW VALUES TO STANDARD
 #define ACC_SCALE_FACTOR 4096.0
 #define GYRO_SCALE_FACTOR 131.2
@@ -43,6 +44,7 @@ void setup() {
   humidity.begin();
   pressure.begin();
   gas.begin();
+  attitude.begin();
 
   Serial.println("Program Started!");
   nicla::leds.setColor(green);
@@ -52,12 +54,13 @@ void loop() {
   static auto lastCheck= millis();
   BHY2.update();  // Keep sensor data updated
   // Check sensor values every second  
-  // if (millis() - lastCheck >= 10) {  //Print data for debug
-  //   lastCheck = millis();
-  //   prepareSensorData();
-  //   //printSensorData();
-  //   //printAccGyroData();
-  // }
+  if (millis() - lastCheck >= 10) {  //Print data for debug
+    lastCheck = millis();
+    //prepareSensorData();
+    //printSensorData();
+    //printAccGyroData();
+    printAttitudeData();
+  }
   delay(1);       // Add small delay to avoid flooding the I2C bus
 }
 
@@ -130,4 +133,12 @@ void printAccGyroData(){
   Serial.print(sensorData[4] ); Serial.print(", ");
   Serial.println(sensorData[5] );  // Use Serial.println for final value to end the line
 
+}
+
+//Debug print roll pitch and heading
+void printAttitudeData(){
+  // Print Accelerometer data
+  Serial.print("Roll: "); Serial.print(attitude.roll());
+  Serial.print("Pitch: "); Serial.print(attitude.pitch());
+  Serial.print("Heading: "); Serial.println(attitude.heading());
 }

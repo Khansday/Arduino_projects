@@ -124,10 +124,10 @@ void loop() {
 
     // Check I2C connection
     if (Serial1.available()) {
-        I2C_connection_status = true;
+        Lidar_connection_status = true;
         Serial.println("Lidar is still connected.");
     } else {
-        I2C_connection_status = false; 
+        Lidar_connection_status = false; 
         Serial.println("Lidar disconnected or not responding!");
            
     }
@@ -145,8 +145,8 @@ void loop() {
   // Timer for logging data every LOG_INTERVAL milliseconds (20 Hz)
   if ((currentMillis - previousLogMillis >= LOG_INTERVAL) ) {
     unsigned long int elapsed_log_time = currentMillis - previousLogMillis;
-    previousLogMillis = currentMillis;
     current_log_frequency = 1000.0 / float(elapsed_log_time) ; // just use for debugging
+    previousLogMillis = currentMillis;
     //get motion and enviroment data only if available
     if (I2C_connection_status) requestSensorData();  // Request sensor data from the I2C bus
     //printRequestedData(); //for debugging
@@ -243,8 +243,9 @@ void createNewFile() {
   if (!SD.exists(fileName.c_str()) ) {
       dataFile = SD.open(fileName.c_str(), FILE_WRITE);  // Open a new file for writing
       if (dataFile) {
-          Serial.print("Created new file: ");
-          Serial.println(fileName);
+          //Serial.print("Created new file: ");
+          //Serial.println(fileName);
+          setColoumnLegends();
           fileIndex++;  // Increment the file index for next file
           break;
       } else {
@@ -256,40 +257,56 @@ void createNewFile() {
   }
 }
 
+void setColoumnLegends(){
+  dataFile.print("time"); dataFile.print(",");
+  dataFile.print("aX"); dataFile.print(",");
+  dataFile.print("aY"); dataFile.print(",");
+  dataFile.print("aZ"); dataFile.print(",");
+  dataFile.print("gX"); dataFile.print(",");
+  dataFile.print("gY"); dataFile.print(",");
+  dataFile.print("gZ"); dataFile.print(",");
+  dataFile.print("T"); dataFile.print(",");  
+  dataFile.print("H"); dataFile.print(","); 
+  dataFile.print("P"); dataFile.print(",");  
+  dataFile.print("AQ"); dataFile.print(","); 
+  for (int idx = 0; idx < NUM_ANGLES; idx++) {
+    String Lidar_data = " D" + String(idx*10) + "," ;
+    dataFile.print(Lidar_data);
+  }
+  dataFile.println();
+}
+
 // Function to log the sensor data to the SD card
 void logData() {
     if (dataFile) {
         timestamp = millis();
         // Log the sensor data in a readable format
-        dataFile.print("time"); dataFile.print(",");
         dataFile.print(timestamp); dataFile.print(",");
         
-        dataFile.print("A"); dataFile.print(",");
         dataFile.print(receivedData[0], 2); dataFile.print(",");
         dataFile.print(receivedData[1], 2); dataFile.print(",");
         dataFile.print(receivedData[2], 2); dataFile.print(",");
 
-        dataFile.print("G"); dataFile.print(",");
         dataFile.print(receivedData[3], 2); dataFile.print(","); 
         dataFile.print(receivedData[4], 2); dataFile.print(",");
         dataFile.print(receivedData[5], 2); dataFile.print(",");
 
-        dataFile.print(" T: "); dataFile.print(","); dataFile.print(receivedData[6], 2); dataFile.print(","); 
-        dataFile.print(" H: "); dataFile.print(","); dataFile.print(receivedData[7], 2); dataFile.print(","); 
-        dataFile.print(" P: "); dataFile.print(","); dataFile.print(receivedData[8], 2); dataFile.print(","); 
-        dataFile.print(" AQ: "); dataFile.print(","); dataFile.print(receivedData[9], 2);dataFile.print(","); 
+        dataFile.print(receivedData[6], 2); dataFile.print(","); 
+        dataFile.print(receivedData[7], 2); dataFile.print(","); 
+        dataFile.print(receivedData[8], 2); dataFile.print(","); 
+        dataFile.print(receivedData[9], 2);dataFile.print(","); 
 
         for (int idx = 0; idx < NUM_ANGLES; idx++) {
-          String Lidar_data = " D" + String(idx*10) + "," + String(min_distances[idx]) +",";
+          String Lidar_data = String(min_distances[idx]) +",";
           dataFile.print(Lidar_data);
         }
 
         dataFile.println();
 
-        Serial.println("Data written to file.");  // Optional: For debugging
+        //Serial.println("Data written to file.");  // Optional: For debugging
         dataFile.flush();  // Ensure the data is written to the SD card
     } else {
-        Serial.println("Error writing to file");
+        //Serial.println("Error writing to file");
     }
 }
 
@@ -316,7 +333,7 @@ void full_raw_buffer() {
   }
 
   if (millis() - start_time >= buffer_fill_time_limit) {
-    Serial.println("Buffer overtime");
+    //Serial.println("Buffer overtime");
   }
 }
 
@@ -346,7 +363,7 @@ void parse_raw_buffer_min_angle() {
         int start_angle_approx = ((int)(start_angle / 10)) * 10;
 
         // Check if start_angle_approx is between 0 and 180
-        if (start_angle_approx >= 0 && start_angle_approx <= 180) {
+        if (start_angle_approx >= 20 && start_angle_approx < 185) {
           int index = start_angle_approx / 10;
 
           // Read data points and find the minimum distance in this packet
@@ -415,7 +432,7 @@ void updateLEDs(){
 void blinkLEDS(){
   turnOffLED();
   setRed();
-  delay(50);  // Wait for 500 milliseconds
+  delay(50);  // Wait for 50 milliseconds
   
   setGreen();
   delay(50);

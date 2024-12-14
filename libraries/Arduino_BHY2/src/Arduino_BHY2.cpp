@@ -25,7 +25,6 @@ Arduino_BHY2::~Arduino_BHY2()
 }
 
 void Arduino_BHY2::pingI2C() {
-  char response = 0xFF;
   int currTime = millis();
   if ((currTime - _pingTime) > 30000) {
     _pingTime = currTime;
@@ -63,6 +62,7 @@ bool Arduino_BHY2::begin(NiclaConfig config, NiclaWiring niclaConnection)
   //in this case, we want to start BLEHandler and DFUManager
   //so they could come to the rescue the failed firmware for BHI260AP
 
+  sensortec.bsecSetBoardTempOffset(0.5f);//assuming the device is powered by USB, if on battery only, use a negative value such as -3.0
 
   if (!(_niclaConfig & NICLA_STANDALONE)) {
     if (_niclaConfig & NICLA_BLE) {

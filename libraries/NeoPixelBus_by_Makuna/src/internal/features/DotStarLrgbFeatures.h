@@ -5,7 +5,7 @@ color depth for NeoPixelBus template class when used with DotStars
 Written by Michael C. Miller.
 
 I invest time and resources providing this open source code,
-please support me by dontating (see https://github.com/Makuna/NeoPixelBus)
+please support me by donating (see https://github.com/Makuna/NeoPixelBus)
 
 -------------------------------------------------------------------------
 This file is part of the Makuna/NeoPixelBus library.
@@ -73,4 +73,11 @@ class DotStarLbgr64Feature :
 {
 };
 
+class DotStarLrgb64Feature :
+    public DotStarL4WordFeature<ColorIndexR, ColorIndexG, ColorIndexB>,
+    public NeoElementsNoSettings
+{
+};
+
 typedef DotStarLbgr64Feature Hd108LbgrFeature;
+typedef DotStarLrgb64Feature Hd108LrgbFeature;

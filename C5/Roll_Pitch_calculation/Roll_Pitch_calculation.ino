@@ -206,7 +206,7 @@ void AccelerometerDataProcessing(){
 void GyroDataProcessing(){
   // Integrate gyroscope data to get angles, accounting for cross-coupling effects without small angle approximation
   gyro_roll_angle += gyro_y_dps * delta_time + gyro_x_dps * sin(gyro_roll_angle * PI / 180) * tan(gyro_pitch_angle * PI / 180) * delta_time + gyro_z_dps * cos(gyro_roll_angle * PI / 180) * tan(gyro_pitch_angle * PI / 180) * delta_time;
-  gyro_pitch_angle += gyro_x_dps * cos(gyro_roll_angle * PI / 180) * delta_time - gyro_z_dps * sin(gyro_roll_angle * PI / 180) * delta_time;
+  gyro_pitch_angle += gyro_x_dps * cos(gyro_roll_angle * PI / 180) * delta_time - gyro_z_dps * sin(gyro_roll_angle * PI / 180) * delta_time;   
   gyro_yaw_angle += (gyro_x_dps * sin(gyro_roll_angle * PI / 180) / cos(gyro_pitch_angle * PI / 180) + gyro_z_dps * cos(gyro_roll_angle * PI / 180) / cos(gyro_pitch_angle * PI / 180)) * delta_time;
 } 
 

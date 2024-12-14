@@ -34,6 +34,8 @@ double delta_time;
 
 int debug_cycles = 100, debug_counter = debug_cycles;  //debug printing variable and cycles
 
+float complementary_filter_alpha;
+
 void setup() {
   pinMode(LED_GRN_PIN, OUTPUT);
   pinMode(LED_BLE_PIN, OUTPUT);
@@ -225,8 +227,29 @@ void magnitudeLEDs(){
     digitalWrite(LED_GRN_PIN, LOW);
   }
 }
+
 void complemetaryFilter(){
-  
+ // Adjust the complementary filter coefficient based on the acceleration magnitude
+  if (fabs(1.0 - accel_magnitude) < accel_threshold) {
+    // If the acceleration magnitude does NOT deviate significantly from 1g
+    // calculate dynamic filter coefficient
+    // numbers are multiplied to fit match map func requirements & increase resolution
+    complementary_filter_alpha = map(fabs(1.0 - accel_magnitude) * 1000, 0, accel_threshold * 1000, 900, 980);
+    complementary_filter_alpha = complementary_filter_alpha / 1000; // bring back original number format
+    
+    // Apply complementary filter
+    roll_angle = complementary_filter_alpha * gyro_roll_angle + (1.0 - complementary_filter_alpha) * accel_roll_angle;
+    pitch_angle = complementary_filter_alpha * gyro_pitch_angle + (1.0 - complementary_filter_alpha) * accel_pitch_angle;
+
+    gyro_roll_angle = roll_angle;
+    gyro_pitch_angle = pitch_angle; 
+    // Yaw is only from the gyroscope since accelerometer doesn't give yaw angle
+
+  } else {
+    roll_angle = gyro_roll_angle;
+    pitch_angle = gyro_pitch_angle;
+  }
+
 }
 
 void sensorPrint() {

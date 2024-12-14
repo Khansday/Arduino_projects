@@ -2,12 +2,12 @@
     This sketch shows how to use Nicla in standalone mode and how to save data
     the on-board 2MB SPI Flash using the LitteFS filesystem.
 
-    Please, take care both ot RAM and Flash usage at run-time.
+    Please, take care both of RAM and Flash usage at run-time.
 
     This example shows how to use MbedOS-native Storage APIs
     - https://os.mbed.com/docs/mbed-os/v6.15/apis/data-storage.html
 
-    C/C++ storage APIs are supporte too
+    C/C++ storage APIs are supported too
     - C-based STDIO: https://en.cppreference.com/w/cpp/header/cstdio
     - Stream-based: https://en.cppreference.com/w/cpp/io
 */
@@ -58,7 +58,7 @@ void setup()
     }
     Serial.println(" done.");
 
-    Serial.print("Initialising the sensors... ");
+    Serial.print("Initializing the sensors... ");
     BHY2.begin();
 
     accel.begin();
